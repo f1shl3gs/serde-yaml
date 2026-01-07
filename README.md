@@ -63,7 +63,7 @@ serde_yaml = "0.9"
 Structs serialize in the obvious way:
 
 ```rust
-use serde::{Serialize, Deserialize};
+use serde_core::{Serialize, Deserialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 struct Point {
@@ -86,7 +86,7 @@ fn main() -> Result<(), serde_yaml::Error> {
 Enums serialize using YAML's `!tag` syntax to identify the variant name.
 
 ```rust
-use serde::{Serialize, Deserialize};
+use serde_core::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 enum Enum {

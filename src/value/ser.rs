@@ -1,7 +1,7 @@
 use crate::error::{self, Error, ErrorImpl};
 use crate::value::tagged::{self, MaybeTag};
 use crate::value::{to_value, Mapping, Number, Sequence, Tag, TaggedValue, Value};
-use serde::ser::{self, Serialize};
+use serde_core::ser::{self, Serialize};
 use std::fmt::Display;
 use std::mem;
 
@@ -10,7 +10,7 @@ type Result<T, E = Error> = std::result::Result<T, E>;
 impl Serialize for Value {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: serde::Serializer,
+        S: serde_core::Serializer,
     {
         match self {
             Value::Null => serializer.serialize_unit(),
@@ -19,7 +19,7 @@ impl Serialize for Value {
             Value::String(s) => serializer.serialize_str(s),
             Value::Sequence(seq) => seq.serialize(serializer),
             Value::Mapping(mapping) => {
-                use serde::ser::SerializeMap;
+                use serde_core::ser::SerializeMap;
                 let mut map = serializer.serialize_map(Some(mapping.len()))?;
                 for (k, v) in mapping {
                     map.serialize_entry(k, v)?;
@@ -41,7 +41,7 @@ impl Serialize for Value {
 /// The `to_value` function is implementable as:
 ///
 /// ```
-/// use serde::Serialize;
+/// use serde_core::Serialize;
 /// use serde_yaml::{Error, Value};
 ///
 /// pub fn to_value<T>(input: T) -> Result<Value, Error>
@@ -143,6 +143,17 @@ impl ser::Serializer for Serializer {
         Ok(Value::Sequence(vec))
     }
 
+    fn serialize_none(self) -> Result<Value> {
+        self.serialize_unit()
+    }
+
+    fn serialize_some<V>(self, value: &V) -> Result<Value>
+    where
+        V: ?Sized + ser::Serialize,
+    {
+        value.serialize(self)
+    }
+
     fn serialize_unit(self) -> Result<Value> {
         Ok(Value::Null)
     }
@@ -162,7 +173,7 @@ impl ser::Serializer for Serializer {
 
     fn serialize_newtype_struct<T>(self, _name: &'static str, value: &T) -> Result<Value>
     where
-        T: ?Sized + ser::Serialize,
+        T: ?Sized + Serialize,
     {
         value.serialize(self)
     }
@@ -175,7 +186,7 @@ impl ser::Serializer for Serializer {
         value: &T,
     ) -> Result<Value>
     where
-        T: ?Sized + ser::Serialize,
+        T: ?Sized + Serialize,
     {
         if variant.is_empty() {
             return Err(error::new(ErrorImpl::EmptyTag));
@@ -184,17 +195,6 @@ impl ser::Serializer for Serializer {
             tag: Tag::new(variant),
             value: to_value(value)?,
         })))
-    }
-
-    fn serialize_none(self) -> Result<Value> {
-        self.serialize_unit()
-    }
-
-    fn serialize_some<V>(self, value: &V) -> Result<Value>
-    where
-        V: ?Sized + ser::Serialize,
-    {
-        value.serialize(self)
     }
 
     fn serialize_seq(self, len: Option<usize>) -> Result<SerializeArray> {
@@ -260,6 +260,13 @@ impl ser::Serializer for Serializer {
             tag: variant,
             mapping: Mapping::new(),
         })
+    }
+
+    fn collect_str<T>(self, value: &T) -> std::result::Result<Self::Ok, Self::Error>
+    where
+        T: ?Sized + Display,
+    {
+        Ok(Value::String(value.to_string()))
     }
 }
 

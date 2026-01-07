@@ -43,7 +43,7 @@
 //!
 //! ```
 //! # use serde_derive::{Serialize, Deserialize};
-//! use serde::{Serialize, Deserialize};
+//! use serde_core::{Serialize, Deserialize};
 //!
 //! #[derive(Serialize, Deserialize, PartialEq, Debug)]
 //! struct Point {
@@ -67,7 +67,7 @@
 //!
 //! ```
 //! # use serde_derive::{Serialize, Deserialize};
-//! use serde::{Serialize, Deserialize};
+//! use serde_core::{Serialize, Deserialize};
 //!
 //! #[derive(Serialize, Deserialize, PartialEq, Debug)]
 //! enum Enum {

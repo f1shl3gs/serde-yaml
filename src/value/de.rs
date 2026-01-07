@@ -1,12 +1,12 @@
 use crate::value::tagged::{self, TagStringVisitor};
 use crate::value::TaggedValue;
 use crate::{number, Error, Mapping, Sequence, Value};
-use serde::de::value::{BorrowedStrDeserializer, StrDeserializer};
-use serde::de::{
+use serde_core::de::value::{BorrowedStrDeserializer, StrDeserializer};
+use serde_core::de::{
     self, Deserialize, DeserializeSeed, Deserializer, EnumAccess, Error as _, Expected, MapAccess,
     SeqAccess, Unexpected, VariantAccess, Visitor,
 };
-use serde::forward_to_deserialize_any;
+use serde_core::forward_to_deserialize_any;
 use std::fmt;
 use std::slice;
 use std::vec;
@@ -60,20 +60,6 @@ impl<'de> Deserialize<'de> for Value {
                 Ok(Value::String(s.to_owned()))
             }
 
-            fn visit_string<E>(self, s: String) -> Result<Value, E>
-            where
-                E: de::Error,
-            {
-                Ok(Value::String(s))
-            }
-
-            fn visit_unit<E>(self) -> Result<Value, E>
-            where
-                E: de::Error,
-            {
-                Ok(Value::Null)
-            }
-
             fn visit_none<E>(self) -> Result<Value, E>
             where
                 E: de::Error,
@@ -88,20 +74,31 @@ impl<'de> Deserialize<'de> for Value {
                 Deserialize::deserialize(deserializer)
             }
 
-            fn visit_seq<A>(self, data: A) -> Result<Value, A::Error>
+            fn visit_unit<E>(self) -> Result<Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(Value::Null)
+            }
+
+            fn visit_seq<A>(self, mut visitor: A) -> Result<Value, A::Error>
             where
                 A: SeqAccess<'de>,
             {
-                let de = serde::de::value::SeqAccessDeserializer::new(data);
-                let sequence = Sequence::deserialize(de)?;
-                Ok(Value::Sequence(sequence))
+                let mut array = Vec::new();
+
+                while let Some(item) = visitor.next_element()? {
+                    array.push(item);
+                }
+
+                Ok(Value::Sequence(array))
             }
 
             fn visit_map<A>(self, data: A) -> Result<Value, A::Error>
             where
                 A: MapAccess<'de>,
             {
-                let de = serde::de::value::MapAccessDeserializer::new(data);
+                let de = serde_core::de::value::MapAccessDeserializer::new(data);
                 let mapping = Mapping::deserialize(de)?;
                 Ok(Value::Mapping(mapping))
             }
@@ -203,7 +200,7 @@ impl<'de> Deserializer<'de> for Value {
             Value::Null => visitor.visit_unit(),
             Value::Bool(v) => visitor.visit_bool(v),
             Value::Number(n) => n.deserialize_any(visitor),
-            Value::String(v) => visitor.visit_string(v),
+            Value::String(v) => visitor.visit_str(&v),
             Value::Sequence(v) => visit_sequence(v, visitor),
             Value::Mapping(v) => visit_mapping(v, visitor),
             Value::Tagged(tagged) => visitor.visit_enum(*tagged),
@@ -322,8 +319,8 @@ impl<'de> Deserializer<'de> for Value {
     where
         V: Visitor<'de>,
     {
-        match self.untag() {
-            Value::String(v) => visitor.visit_string(v),
+        match &self.untag() {
+            Value::String(v) => visitor.visit_str(v),
             other => Err(other.invalid_type(&visitor)),
         }
     }
@@ -340,7 +337,7 @@ impl<'de> Deserializer<'de> for Value {
         V: Visitor<'de>,
     {
         match self.untag() {
-            Value::String(v) => visitor.visit_string(v),
+            Value::String(v) => visitor.visit_str(&v),
             Value::Sequence(v) => visit_sequence(v, visitor),
             other => Err(other.invalid_type(&visitor)),
         }

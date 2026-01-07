@@ -6,7 +6,7 @@
 )]
 
 use indoc::indoc;
-use serde::ser::SerializeMap;
+use serde_core::ser::SerializeMap;
 use serde_derive::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Number, Value};
 use std::collections::BTreeMap;
@@ -15,7 +15,7 @@ use std::iter;
 
 fn test_serde<T>(thing: &T, yaml: &str)
 where
-    T: serde::Serialize + serde::de::DeserializeOwned + PartialEq + Debug,
+    T: serde_core::Serialize + serde_core::de::DeserializeOwned + PartialEq + Debug,
 {
     let serialized = serde_yaml::to_string(&thing).unwrap();
     assert_eq!(yaml, serialized);
@@ -34,7 +34,7 @@ where
     let deserialized: T = serde_yaml::from_value(value).unwrap();
     assert_eq!(*thing, deserialized);
 
-    serde_yaml::from_str::<serde::de::IgnoredAny>(yaml).unwrap();
+    serde_yaml::from_str::<serde_core::de::IgnoredAny>(yaml).unwrap();
 }
 
 #[test]
@@ -204,10 +204,10 @@ fn test_map() {
 fn test_map_key_value() {
     struct Map;
 
-    impl serde::Serialize for Map {
+    impl serde_core::Serialize for Map {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
-            S: serde::Serializer,
+            S: serde_core::Serializer,
         {
             // Test maps which do not serialize using serialize_entry.
             let mut map = serializer.serialize_map(Some(1))?;

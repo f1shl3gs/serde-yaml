@@ -1,9 +1,9 @@
 #![allow(clippy::zero_sized_map_values)]
 
 use indoc::indoc;
-use serde::de::Deserialize;
+use serde_core::de::Deserialize;
 #[cfg(not(miri))]
-use serde::de::{SeqAccess, Visitor};
+use serde_core::de::{SeqAccess, Visitor};
 use serde_derive::{Deserialize, Serialize};
 use serde_yaml::value::{Tag, TaggedValue};
 use serde_yaml::{Deserializer, Value};
@@ -148,11 +148,11 @@ fn test_second_document_syntax_error() {
 
     let mut de = Deserializer::from_str(yaml);
     let first_doc = de.next().unwrap();
-    let result = <usize as serde::Deserialize>::deserialize(first_doc);
+    let result = <usize as serde_core::Deserialize>::deserialize(first_doc);
     assert_eq!(0, result.unwrap());
 
     let second_doc = de.next().unwrap();
-    let result = <usize as serde::Deserialize>::deserialize(second_doc);
+    let result = <usize as serde_core::Deserialize>::deserialize(second_doc);
     let expected =
         "did not find expected node content at line 4 column 1, while parsing a block node";
     assert_eq!(expected, result.unwrap_err().to_string());
@@ -443,7 +443,7 @@ fn test_billion_laughs() {
     impl<'de> Deserialize<'de> for X {
         fn deserialize<D>(deserializer: D) -> Result<X, D::Error>
         where
-            D: serde::Deserializer<'de>,
+            D: serde_core::Deserializer<'de>,
         {
             deserializer.deserialize_any(X)
         }

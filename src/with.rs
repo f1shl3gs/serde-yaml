@@ -7,7 +7,7 @@
 ///
 /// ```
 /// # use serde_derive::{Deserialize, Serialize};
-/// use serde::{Deserialize, Serialize};
+/// use serde_core::{Deserialize, Serialize};
 ///
 /// #[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// enum Enum {
@@ -74,11 +74,11 @@
 /// ```
 pub mod singleton_map {
     use crate::value::{Mapping, Sequence, Value};
-    use serde::de::{
+    use serde_core::de::{
         self, Deserialize, DeserializeSeed, Deserializer, EnumAccess, IgnoredAny, MapAccess,
         Unexpected, VariantAccess, Visitor,
     };
-    use serde::ser::{
+    use serde_core::ser::{
         self, Serialize, SerializeMap, SerializeStructVariant, SerializeTupleVariant, Serializer,
     };
     use std::fmt::{self, Display};
@@ -202,6 +202,18 @@ pub mod singleton_map {
             self.delegate.serialize_bytes(v)
         }
 
+        fn serialize_none(self) -> Result<Self::Ok, Self::Error> {
+            self.delegate.serialize_none()
+        }
+
+        fn serialize_some<V>(self, value: &V) -> Result<Self::Ok, Self::Error>
+        where
+            V: ?Sized + Serialize,
+        {
+            self.delegate
+                .serialize_some(&SingletonMap { delegate: value })
+        }
+
         fn serialize_unit(self) -> Result<Self::Ok, Self::Error> {
             self.delegate.serialize_unit()
         }
@@ -244,18 +256,6 @@ pub mod singleton_map {
             let mut map = self.delegate.serialize_map(Some(1))?;
             map.serialize_entry(variant, value)?;
             map.end()
-        }
-
-        fn serialize_none(self) -> Result<Self::Ok, Self::Error> {
-            self.delegate.serialize_none()
-        }
-
-        fn serialize_some<V>(self, value: &V) -> Result<Self::Ok, Self::Error>
-        where
-            V: ?Sized + Serialize,
-        {
-            self.delegate
-                .serialize_some(&SingletonMap { delegate: value })
         }
 
         fn serialize_seq(self, len: Option<usize>) -> Result<Self::SerializeSeq, Self::Error> {
@@ -348,7 +348,7 @@ pub mod singleton_map {
         }
 
         fn end(mut self) -> Result<Self::Ok, Self::Error> {
-            self.map.serialize_value(&self.sequence)?;
+            self.map.serialize_value(self.sequence.as_slice())?;
             self.map.end()
         }
     }
@@ -669,14 +669,6 @@ pub mod singleton_map {
                 .visit_enum(de::value::BorrowedStrDeserializer::new(v))
         }
 
-        fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-        where
-            E: de::Error,
-        {
-            self.delegate
-                .visit_enum(de::value::StringDeserializer::new(v))
-        }
-
         fn visit_none<E>(self) -> Result<Self::Value, E>
         where
             E: de::Error,
@@ -841,7 +833,7 @@ pub mod singleton_map {
 ///
 /// ```
 /// # use serde_derive::{Deserialize, Serialize};
-/// use serde::{Deserialize, Serialize};
+/// use serde_core::{Deserialize, Serialize};
 ///
 /// #[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// enum Enum {
@@ -901,7 +893,7 @@ pub mod singleton_map {
 ///
 /// ```
 /// # use serde_derive::{Deserialize, Serialize};
-/// # use serde::{Deserialize, Serialize};
+/// # use serde_core::{Deserialize, Serialize};
 /// #
 /// # #[derive(Serialize, Deserialize, PartialEq, Debug)]
 /// # enum Enum {
@@ -934,11 +926,11 @@ pub mod singleton_map {
 /// ```
 pub mod singleton_map_recursive {
     use crate::value::{Mapping, Sequence, Value};
-    use serde::de::{
+    use serde_core::de::{
         self, Deserialize, DeserializeSeed, Deserializer, EnumAccess, IgnoredAny, MapAccess,
         SeqAccess, Unexpected, VariantAccess, Visitor,
     };
-    use serde::ser::{
+    use serde_core::ser::{
         self, Serialize, SerializeMap, SerializeSeq, SerializeStruct, SerializeStructVariant,
         SerializeTuple, SerializeTupleStruct, SerializeTupleVariant, Serializer,
     };
@@ -1283,7 +1275,7 @@ pub mod singleton_map_recursive {
         }
 
         fn end(mut self) -> Result<Self::Ok, Self::Error> {
-            self.map.serialize_value(&self.sequence)?;
+            self.map.serialize_value(self.sequence.as_slice())?;
             self.map.end()
         }
     }
@@ -1297,7 +1289,7 @@ pub mod singleton_map_recursive {
 
         fn serialize_key<T>(&mut self, key: &T) -> Result<(), Self::Error>
         where
-            T: ?Sized + ser::Serialize,
+            T: ?Sized + Serialize,
         {
             self.delegate
                 .serialize_key(&SingletonMapRecursive { delegate: key })
@@ -1305,7 +1297,7 @@ pub mod singleton_map_recursive {
 
         fn serialize_value<T>(&mut self, value: &T) -> Result<(), Self::Error>
         where
-            T: ?Sized + ser::Serialize,
+            T: ?Sized + Serialize,
         {
             self.delegate
                 .serialize_value(&SingletonMapRecursive { delegate: value })
@@ -1313,8 +1305,8 @@ pub mod singleton_map_recursive {
 
         fn serialize_entry<K, V>(&mut self, key: &K, value: &V) -> Result<(), Self::Error>
         where
-            K: ?Sized + ser::Serialize,
-            V: ?Sized + ser::Serialize,
+            K: ?Sized + Serialize,
+            V: ?Sized + Serialize,
         {
             self.delegate.serialize_entry(
                 &SingletonMapRecursive { delegate: key },
@@ -1793,13 +1785,6 @@ pub mod singleton_map_recursive {
             self.delegate.visit_borrowed_str(v)
         }
 
-        fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-        where
-            E: de::Error,
-        {
-            self.delegate.visit_string(v)
-        }
-
         fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
         where
             E: de::Error,
@@ -1812,13 +1797,6 @@ pub mod singleton_map_recursive {
             E: de::Error,
         {
             self.delegate.visit_borrowed_bytes(v)
-        }
-
-        fn visit_byte_buf<E>(self, v: Vec<u8>) -> Result<Self::Value, E>
-        where
-            E: de::Error,
-        {
-            self.delegate.visit_byte_buf(v)
         }
 
         fn visit_none<E>(self) -> Result<Self::Value, E>
@@ -1952,14 +1930,6 @@ pub mod singleton_map_recursive {
         {
             self.delegate
                 .visit_enum(de::value::BorrowedStrDeserializer::new(v))
-        }
-
-        fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
-        where
-            E: de::Error,
-        {
-            self.delegate
-                .visit_enum(de::value::StringDeserializer::new(v))
         }
 
         fn visit_none<E>(self) -> Result<Self::Value, E>

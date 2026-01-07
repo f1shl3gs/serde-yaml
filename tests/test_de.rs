@@ -14,7 +14,7 @@ use std::fmt::Debug;
 
 fn test_de<T>(yaml: &str, expected: &T)
 where
-    T: serde::de::DeserializeOwned + PartialEq + Debug,
+    T: serde_core::de::DeserializeOwned + PartialEq + Debug,
 {
     let deserialized: T = serde_yaml::from_str(yaml).unwrap();
     assert_eq!(*expected, deserialized);
@@ -26,7 +26,7 @@ where
     let deserialized: T = serde_yaml::from_value(value).unwrap();
     assert_eq!(*expected, deserialized);
 
-    serde_yaml::from_str::<serde::de::IgnoredAny>(yaml).unwrap();
+    serde_yaml::from_str::<serde_core::de::IgnoredAny>(yaml).unwrap();
 
     let mut deserializer = Deserializer::from_str(yaml);
     let document = deserializer.next().unwrap();
@@ -37,25 +37,25 @@ where
 
 fn test_de_no_value<'de, T>(yaml: &'de str, expected: &T)
 where
-    T: serde::de::Deserialize<'de> + PartialEq + Debug,
+    T: serde_core::de::Deserialize<'de> + PartialEq + Debug,
 {
     let deserialized: T = serde_yaml::from_str(yaml).unwrap();
     assert_eq!(*expected, deserialized);
 
     serde_yaml::from_str::<serde_yaml::Value>(yaml).unwrap();
-    serde_yaml::from_str::<serde::de::IgnoredAny>(yaml).unwrap();
+    serde_yaml::from_str::<serde_core::de::IgnoredAny>(yaml).unwrap();
 }
 
 fn test_de_seed<'de, T, S>(yaml: &'de str, seed: S, expected: &T)
 where
     T: PartialEq + Debug,
-    S: serde::de::DeserializeSeed<'de, Value = T>,
+    S: serde_core::de::DeserializeSeed<'de, Value = T>,
 {
     let deserialized: T = seed.deserialize(Deserializer::from_str(yaml)).unwrap();
     assert_eq!(*expected, deserialized);
 
     serde_yaml::from_str::<serde_yaml::Value>(yaml).unwrap();
-    serde_yaml::from_str::<serde::de::IgnoredAny>(yaml).unwrap();
+    serde_yaml::from_str::<serde_core::de::IgnoredAny>(yaml).unwrap();
 }
 
 #[test]
@@ -465,25 +465,25 @@ fn test_nan() {
 fn test_stateful() {
     struct Seed(i64);
 
-    impl<'de> serde::de::DeserializeSeed<'de> for Seed {
+    impl<'de> serde_core::de::DeserializeSeed<'de> for Seed {
         type Value = i64;
         fn deserialize<D>(self, deserializer: D) -> Result<i64, D::Error>
         where
-            D: serde::de::Deserializer<'de>,
+            D: serde_core::de::Deserializer<'de>,
         {
             struct Visitor(i64);
-            impl<'de> serde::de::Visitor<'de> for Visitor {
+            impl<'de> serde_core::de::Visitor<'de> for Visitor {
                 type Value = i64;
 
                 fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                     write!(formatter, "an integer")
                 }
 
-                fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<i64, E> {
+                fn visit_i64<E: serde_core::de::Error>(self, v: i64) -> Result<i64, E> {
                     Ok(v * self.0)
                 }
 
-                fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<i64, E> {
+                fn visit_u64<E: serde_core::de::Error>(self, v: u64) -> Result<i64, E> {
                     Ok(v as i64 * self.0)
                 }
             }

@@ -9,18 +9,19 @@ edition = "2021"
 keywords = ["yaml", "serde", "serialization"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/dtolnay/serde-yaml"
-rust-version = "1.64"
+rust-version = "1.68"
 
 [dependencies]
 indexmap = "2.12"
 itoa = "1.0"
-zmij = "1.0"
-serde = "1.0"
+serde_core = { version = "1.0", default-features = false }
 unsafe-libyaml = "0.2"
+zmij = "1.0"
 
 [dev-dependencies]
 anyhow = "1.0"
 indoc = "2.0"
+serde = "1.0"
 serde_derive = "1.0"
 
 [lib]

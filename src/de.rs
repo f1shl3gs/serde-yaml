@@ -4,8 +4,8 @@ use crate::libyaml::parser::{MappingStart, Scalar, ScalarStyle, SequenceStart};
 use crate::libyaml::tag::Tag;
 use crate::loader::{Document, Loader};
 use crate::path::Path;
-use serde::de::value::StrDeserializer;
-use serde::de::{
+use serde_core::de::value::StrDeserializer;
+use serde_core::de::{
     self, Deserialize, DeserializeOwned, DeserializeSeed, Expected, IgnoredAny, Unexpected, Visitor,
 };
 use std::fmt;
@@ -25,7 +25,7 @@ type Result<T, E = Error> = std::result::Result<T, E>;
 ///
 /// ```
 /// use anyhow::Result;
-/// use serde::Deserialize;
+/// use serde_core::Deserialize;
 /// use serde_yaml::Value;
 ///
 /// fn main() -> Result<()> {
@@ -41,7 +41,7 @@ type Result<T, E = Error> = std::result::Result<T, E>;
 ///
 /// ```
 /// use anyhow::Result;
-/// use serde::Deserialize;
+/// use serde_core::Deserialize;
 /// use serde_yaml::Value;
 ///
 /// fn main() -> Result<()> {
